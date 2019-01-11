@@ -30,13 +30,15 @@
  */
 package com.corundumstudio.socketio.transport;
 
-import static org.junit.Assert.assertTrue;
 
+
+import com.corundumstudio.socketio.Configuration;
+import com.corundumstudio.socketio.SocketIOServer;
 import org.junit.Test;
 
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.embedded.EmbeddedChannel;
-import io.netty.handler.codec.http.websocketx.CloseWebSocketFrame;
+
 
 /**
  * @author hangsu.cho@navercorp.com
@@ -45,19 +47,22 @@ import io.netty.handler.codec.http.websocketx.CloseWebSocketFrame;
 public class WebSocketTransportTest {
 
   /**
-   * Test method for {@link com.corundumstudio.socketio.transport.WebSocketTransport#channelRead()}.
+   * Test method for {@link com.corundumstudio.socketio.transport.WebSocketTransport#}.
    */
   @Test
   public void testCloseFrame() {
-    EmbeddedChannel channel = createChannel();
 
-    channel.writeInbound(new CloseWebSocketFrame());
-    Object msg = channel.readOutbound();
-
-    // https://tools.ietf.org/html/rfc6455#section-5.5.1
-    // If an endpoint receives a Close frame and did not previously send a Close frame, the endpoint
-    // MUST send a Close frame in response.
-    assertTrue(msg instanceof CloseWebSocketFrame);
+    Configuration configuration = new Configuration();
+    configuration.setHostname("127.0.0.1");
+    configuration.setPort(8088);
+    SocketIOServer server = new SocketIOServer(configuration);
+    server.start();
+    try {
+      Thread.sleep(Integer.MAX_VALUE);
+    } catch (InterruptedException e) {
+      e.printStackTrace();
+    }
+    server.stop();
   }
 
   private EmbeddedChannel createChannel() {

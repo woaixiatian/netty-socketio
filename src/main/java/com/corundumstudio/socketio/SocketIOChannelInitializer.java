@@ -141,9 +141,16 @@ public class SocketIOChannelInitializer extends ChannelInitializer<Channel> impl
 
     @Override
     protected void initChannel(Channel ch) throws Exception {
+
+
+        System.out.println("---SocketIOChannelInitializer--remoteAddress--"+ch.remoteAddress());
+        System.out.println("---SocketIOChannelInitializer--remoteAddress--"+ch.toString());
+
         ChannelPipeline pipeline = ch.pipeline();
+
         addSslHandler(pipeline);
         addSocketioHandlers(pipeline);
+
     }
 
     /**

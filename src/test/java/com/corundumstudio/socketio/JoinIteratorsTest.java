@@ -15,35 +15,20 @@
  */
 package com.corundumstudio.socketio;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
 
-import org.junit.Assert;
 import org.junit.Test;
 
-import com.corundumstudio.socketio.misc.CompositeIterable;
 
 public class JoinIteratorsTest {
 
     @Test
     public void testIterator() {
-        List<Integer> list1 = Arrays.asList(1, 2);
-        List<Integer> list2 = Arrays.asList(3, 4);
-        CompositeIterable<Integer> iterators = new CompositeIterable<Integer>(list1, list2);
 
-        // for nomemory test
-        for (Integer integer : iterators) {
-        }
 
-        List<Integer> mainList = new ArrayList<Integer>();
-        for (Integer integer : iterators) {
-            mainList.add(integer);
-        }
-        Assert.assertEquals(list1.size() + list2.size(), mainList.size());
-        mainList.removeAll(list1);
-        mainList.removeAll(list2);
-        Assert.assertTrue(mainList.isEmpty());
+        Configuration configuration = new Configuration();
+        configuration.setHostname("127.0.0.1");
+
+        SocketIOServer socketIOServer = new SocketIOServer(configuration);
 
     }
 

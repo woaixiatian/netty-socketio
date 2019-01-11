@@ -51,15 +51,19 @@ public class InPacketHandler extends SimpleChannelInboundHandler<PacketsMessage>
         this.exceptionListener = exceptionListener;
     }
 
+    public static int count= 0 ;
+
     @Override
     protected void channelRead0(io.netty.channel.ChannelHandlerContext ctx, PacketsMessage message)
                 throws Exception {
+        System.out.println("---InPacketHandler--remoteAddress--"+ctx.channel().remoteAddress());
         ByteBuf content = message.getContent();
         ClientHead client = message.getClient();
 
         if (log.isTraceEnabled()) {
             log.trace("In message: {} sessionId: {}", content.toString(CharsetUtil.UTF_8), client.getSessionId());
         }
+        log.error("--------------------count-----------------"+count);
         while (content.isReadable()) {
             try {
                 Packet packet = decoder.decodePackets(content, client);

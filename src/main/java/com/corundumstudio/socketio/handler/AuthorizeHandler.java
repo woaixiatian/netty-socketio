@@ -107,6 +107,8 @@ public class AuthorizeHandler extends ChannelInboundHandlerAdapter implements Di
 
     @Override
     public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
+
+        System.out.println("---AuthorizeHandler--remoteAddress--"+ctx.channel().remoteAddress());
         SchedulerKey key = new SchedulerKey(Type.PING_TIMEOUT, ctx.channel());
         disconnectScheduler.cancel(key);
 
@@ -120,6 +122,8 @@ public class AuthorizeHandler extends ChannelInboundHandlerAdapter implements Di
                 HttpResponse res = new DefaultHttpResponse(HTTP_1_1, HttpResponseStatus.BAD_REQUEST);
                 channel.writeAndFlush(res).addListener(ChannelFutureListener.CLOSE);
                 req.release();
+
+                System.out.println("---AuthorizeHandler--remoteAddress-- end "+ctx.channel().remoteAddress());
                 return;
             }
 
@@ -128,6 +132,7 @@ public class AuthorizeHandler extends ChannelInboundHandlerAdapter implements Di
                     && sid == null) {
                 String origin = req.headers().get(HttpHeaderNames.ORIGIN);
                 if (!authorize(ctx, channel, origin, queryDecoder.parameters(), req)) {
+                    System.out.println("---AuthorizeHandler--remoteAddress-- end "+ctx.channel().remoteAddress());
                     req.release();
                     return;
                 }

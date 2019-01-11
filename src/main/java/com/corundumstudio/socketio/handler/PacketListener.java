@@ -44,6 +44,7 @@ public class PacketListener {
     }
 
     public void onPacket(Packet packet, NamespaceClient client, Transport transport) {
+        System.out.println("---PacketListener--remoteAddress--"+client.getSessionId());
         final AckRequest ackRequest = new AckRequest(packet, client);
 
         if (packet.isAckRequested()) {

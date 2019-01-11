@@ -205,6 +205,8 @@ public class EncoderHandler extends ChannelOutboundHandlerAdapter {
 
     @Override
     public void write(ChannelHandlerContext ctx, Object msg, ChannelPromise promise) throws Exception {
+
+        System.out.println("---EncoderHandler--remoteAddress--"+ctx.channel().remoteAddress());
         if (!(msg instanceof HttpMessage)) {
             super.write(ctx, msg, promise);
             return;
