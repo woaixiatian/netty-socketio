@@ -95,6 +95,7 @@ public class AuthorizeHandler extends ChannelInboundHandlerAdapter implements Di
     @Override
     public void channelActive(final ChannelHandlerContext ctx) throws Exception {
         SchedulerKey key = new SchedulerKey(Type.PING_TIMEOUT, ctx.channel());
+
         disconnectScheduler.schedule(key, new Runnable() {
             @Override
             public void run() {
@@ -111,6 +112,7 @@ public class AuthorizeHandler extends ChannelInboundHandlerAdapter implements Di
         System.out.println("---AuthorizeHandler--remoteAddress--"+ctx.channel().remoteAddress());
         SchedulerKey key = new SchedulerKey(Type.PING_TIMEOUT, ctx.channel());
         disconnectScheduler.cancel(key);
+
 
         if (msg instanceof FullHttpRequest) {
             FullHttpRequest req = (FullHttpRequest) msg;

@@ -54,13 +54,25 @@ public class SocketIOServer implements ClientListeners {
 
     private SocketIOChannelInitializer pipelineFactory = new SocketIOChannelInitializer();
 
+    /**
+     * 工作组和线程组
+     * 1个是用来接受请求,将请求添加到监听队列
+     * 1一个是用来轮询监听队列,如果有IO任务,就分配线程处理
+     * 从而实现IO多路复用, 基于Netty的IO多路复用是NIO,非阻塞的同步IO
+     *
+     * */
     private EventLoopGroup bossGroup;
     private EventLoopGroup workerGroup;
 
     public SocketIOServer(Configuration configuration) {
         this.configuration = configuration;
         this.configCopy = new Configuration(configuration);
+        //命名空间名称 与 Namespace 的映射关系
+        //一个Namespace 相当于是一个聊天群/组,内部会话内容共享
+        //NamespacesHub 相当于是多个Namespace的集合,以及他们与name映射关系
         namespacesHub = new NamespacesHub(configCopy);
+        //这里会新建一个默认的Namespace / SocketIONamespace
+        // 实际上, 这个默认群组目前看是没有什么作用的?是否可以取消呢?可以测试下
         mainNamespace = addNamespace(Namespace.DEFAULT_NAME);
     }
 
@@ -120,25 +132,36 @@ public class SocketIOServer implements ClientListeners {
     }
 
     /**
-     * Start server asynchronously
+     * SOcketIOSever 启动的重要配置
      * 
      * @return void
      */
     public Future<Void> startAsync() {
         log.info("Session store / pubsub factory used: {}", configCopy.getStoreFactory());
+        //http://svip.iocoder.cn/Netty/EventLoop-1-Reactor-Model/
+        // 创建 boss 线程组 用于服务端接受客户端的连接-------- 1个
+        // 创建 worker 线程组 用于进行 SocketChannel 的数据读写----------通常为CPU个数
         initGroups();
 
+        //创建处理请求的 的Handlder 链
         pipelineFactory.start(configCopy, namespacesHub);
-
+        //一个服务端用来监听新进来的连接的 TCP 的 Channel 。对于每一个新进来的连接，都会创建一个对应的 SocketChannel
+        //readMessage()  SocketChannel ch = SocketUtils.accept(this.javaChannel()); 从channel从读取请求信息
+        //   一个新连接到达ServerSocketChannel时，会创建一个SocketChannel
+        //详见 http://ifeve.com/socket-channel/
         Class<? extends ServerChannel> channelClass = NioServerSocketChannel.class;
         if (configCopy.isUseLinuxNativeEpoll()) {
             channelClass = EpollServerSocketChannel.class;
         }
 
+        // 创建 ServerBootstrap 对象
         ServerBootstrap b = new ServerBootstrap();
         b.group(bossGroup, workerGroup)
+            //设置要被实例化的为 NioServerSocketChannel 类
         .channel(channelClass)
+                //设置连入服务端的 Client 的 SocketChannel 的处理器
         .childHandler(pipelineFactory);
+        // 设置 NioServerSocketChannel 的可选项
         applyConnectionOptions(b);
 
         InetSocketAddress addr = new InetSocketAddress(configCopy.getPort());
@@ -146,6 +169,9 @@ public class SocketIOServer implements ClientListeners {
             addr = new InetSocketAddress(configCopy.getHostname(), configCopy.getPort());
         }
 
+        // Start the server.
+        // 绑定端口 即启动服务端 , 异步
+        //http://svip.iocoder.cn/Netty/bootstrap-1-server/
         return b.bind(addr).addListener(new FutureListener<Void>() {
             @Override
             public void operationComplete(Future<Void> future) throws Exception {
