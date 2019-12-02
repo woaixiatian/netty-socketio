@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>404 NOT FOUND</title>
+    <script type="text/javascript" src="file:///Users/xiaobaicai/IdeaProjects/netty-socketio/src/main/webapp/static/socketio/socket.io.dev.js"></script>
+    <script type="text/javascript" src="file:///Users/xiaobaicai/IdeaProjects/netty-socketio/src/main/webapp/static/jquery/jquery.min.js"></script>
+    <style>
+        * {
+            margin:0;
+            padding:0;
+        }
+        html,body {
+            height: 100%;
+        }
+        html {
+            font-size: 100px;
+        }
+        .not-found {
+            text-align: center;
+            height: 100%;
+            box-sizing: border-box;
+            background: #f2f2f2;
+            padding-top: .5rem;
+        }
+        .not-found .wrapper {
+            margin: 100px auto;
+        }
+        .not-found img {
+            width: 100%;
+            display: block;
+        }
+        .not-found input {
+            position: relative;
+            top: -.6rem;
+            width: 56%;
+            height: 6vh;
+            font-size: .16rem;
+            border: 1px solid #7d7d7d;
+            border-radius: 4px;
+            color: #7d7d7d;
+            background: transparent;
+        }
+        .not-found p {
+            position: absolute;
+            bottom: .48rem;
+            left: 50%;
+            font-size: .12rem;
+            color: #949494;
+            margin-left: -.6rem;
+        }
+        @media screen and (min-width:1024px) {
+            .wrapper {
+                width: 476px;
+            }
+            .wrapper input {
+                top: -.4rem;
+            }
+            .wrapper p {
+                font-size: 16px;
+                margin-left: -.8rem;
+            }
+        }
+        @media screen and (max-width:1024px) {
+            .wrapper {
+                width: 60%;;
+            }
+        }
+        .btn {
+            display: inline-block;
+            line-height: 1;
+            white-space: nowrap;
+            cursor: pointer;
+            background: #FFF;
+            border: 1px solid #DCDFE6;
+            color: #606266;
+            -webkit-appearance: none;
+            text-align: center;
+            -webkit-box-sizing: border-box;
+            box-sizing: border-box;
+            outline: 0;
+            margin: 0;
+            font-weight: 500;
+            -moz-user-select: none;
+            padding: 20px 20px;
+            border-radius: 3px;
+            font-size: 13px;
+            outline: none !important;
+            -webkit-transition: all 0.1s;
+            -o-transition: all 0.1s;
+            transition: all 0.1s;
+        }
+    </style>
+</head>
+<body>
+    <section class="not-found">
+
+            <input type="text" id="time"/>
+
+            <button  class="btn" onclick="start()" >开始</button>
+            <button  class="btn" onclick="finish()" >结束</button>
+            <button  class="btn" onclick="join()" >加入</button>
+        
+    </section>
+</body>
+</html>
+
+<script type="text/javascript">
+
+
+        var websocketUrl = "http://127.0.0.1:7700";
+
+        var connectionOpts =  {
+            forceNew : true,
+            reconnection: true,
+            reconnectionDelay: 200000,                  //starts with 2 secs delay, then 4, 6, 8, until 60 where it stays forever until it reconnects
+            reconnectionDelayMax : 600000,             //1 minute maximum delay between connections
+            reconnectionAttempts: "Infinity",         //to prevent dead clients, having the user to having to manually reconnect after a server restart.
+            timeout: 100000,                           //before connect_error and connect_timeout are emitted.
+            "transports" : ['websocket', 'polling']               //forces the transport to be only websocket. Server needs to be setup as well/
+        };
+        var webSocket =  io.connect(websocketUrl+'/websocket/test',connectionOpts);
+
+
+        webSocket.on('error', function(event) {
+            console.log("error:"+event);
+        });
+
+        webSocket.on('connect', function(event) {
+            console.log("connect:"+ event);
+        });
+
+        webSocket.on('disconnect', function(event) {
+            console.log("disconnect:"+ event);
+        });
+
+        webSocket.on('connect_error', function(event) {
+            console.log("connect_error:"+event);
+        });
+
+        webSocket.on('connect_timeout', function(event) {
+            console.log("connect_timeout:"+event);
+        });
+
+        webSocket.on('reconnect', function(event) {
+            console.log("reconnect:"+event);
+        });
+
+        webSocket.on('message', function(data) {
+            console.log(data);
+        });
+
+        webSocket.on('test', function(data) {
+            console.log(data);
+        });
+
+        function start() {
+            const watchTime = {};
+            watchTime.activityId='1';
+            watchTime.userId = '2';
+            watchTime.type=1;
+            // const watchTimeJson =  JSON.stringify(watchTime);
+            webSocket.emit('watch_start', watchTime,function(data) {
+                console.log("start:"+data);
+            });
+        }
+        function finish() {
+            webSocket.emit('watch_finish', "finish",function(data) {
+                console.log("finish:"+data);
+            });
+        }
+        function join() {
+            // webSocket.emit('connect','/websocket/test1',function(data) {
+            //     console.log("join:"+data);
+            // });
+            webSocket.io.engine.sendPacket('message','0/websocket/test1',null,null)
+        }
+
+</script>
