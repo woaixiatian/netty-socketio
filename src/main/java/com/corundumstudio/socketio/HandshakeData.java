@@ -23,15 +23,20 @@ import java.util.Map;
 
 import io.netty.handler.codec.http.HttpHeaders;
 
+/**
+ * 请求 握手数据的封装体
+ * */
 public class HandshakeData implements Serializable {
 
     private static final long serialVersionUID = 1196350300161819978L;
-
+    //HTTP 头
     private HttpHeaders headers;
+    //远程地址
     private InetSocketAddress address;
     private Date time = new Date();
     private InetSocketAddress local;
     private String url;
+    //请求参数
     private Map<String, List<String>> urlParams;
     private boolean xdomain;
 

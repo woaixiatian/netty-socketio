@@ -82,10 +82,16 @@ public class WebSocketTransport extends ChannelInboundHandlerAdapter {
 
         System.out.println("---WebSocketTransport--remoteAddress--"+ctx.channel().remoteAddress());
         if (msg instanceof CloseWebSocketFrame) {
+            System.out.println("---WebSocketTransport------1");
           ctx.channel().writeAndFlush(msg).addListener(ChannelFutureListener.CLOSE);
         } else if (msg instanceof BinaryWebSocketFrame
                     || msg instanceof TextWebSocketFrame) {
+            //message通信
+            System.out.println("---WebSocketTransport------2");
+            //这里如果是webSocket请求数据，那么转化成PacketsMessage
+            //传回给InPacketHandler处理
             ByteBufHolder frame = (ByteBufHolder) msg;
+
             ClientHead client = clientsBox.get(ctx.channel());
             if (client == null) {
                 log.debug("Client with was already disconnected. Channel closed!");
@@ -93,27 +99,39 @@ public class WebSocketTransport extends ChannelInboundHandlerAdapter {
                 frame.release();
                 return;
             }
-
+            //转化成PacketsMessage，调用pipeline的完全的全新handler链处理，会重新被InPacketHandler处理
             ctx.pipeline().fireChannelRead(new PacketsMessage(client, frame.content(), Transport.WEBSOCKET));
             frame.release();
         } else if (msg instanceof FullHttpRequest) {
+            //建立连接
+
+            System.out.println("---WebSocketTransport------3");
+            //如果是HTTP请求，那么就是建立webSocket的请求
             FullHttpRequest req = (FullHttpRequest) msg;
             QueryStringDecoder queryDecoder = new QueryStringDecoder(req.uri());
             String path = queryDecoder.path();
             List<String> transport = queryDecoder.parameters().get("transport");
+            //获取
             List<String> sid = queryDecoder.parameters().get("sid");
 
             if (transport != null && NAME.equals(transport.get(0))) {
+                //判断接入请求是否要接入websocket传输协议
                 try {
                     if (!configuration.getTransports().contains(Transport.WEBSOCKET)) {
+                        System.out.println("---WebSocketTransport------3--1");
                         log.debug("{} transport not supported by configuration.", Transport.WEBSOCKET);
                         ctx.channel().close();
                         return;
                     }
+                    //处理握手信息
                     if (sid != null && sid.get(0) != null) {
+                        System.out.println("---WebSocketTransport------3--2");
+                        //如果连接中已经携带
                         final UUID sessionId = UUID.fromString(sid.get(0));
                         handshake(ctx, sessionId, path, req);
                     } else {
+                        System.out.println("---WebSocketTransport------3--3");
+
                         ClientHead client = ctx.channel().attr(ClientHead.CLIENT).get();
                         // first connection
                         handshake(ctx, client.getSessionId(), path, req);
@@ -162,8 +180,10 @@ public class WebSocketTransport extends ChannelInboundHandlerAdapter {
 
         WebSocketServerHandshakerFactory factory =
                 new WebSocketServerHandshakerFactory(getWebSocketLocation(req), null, true, configuration.getMaxFramePayloadLength());
+
         WebSocketServerHandshaker handshaker = factory.newHandshaker(req);
         if (handshaker != null) {
+
             ChannelFuture f = handshaker.handshake(channel, req);
             f.addListener(new ChannelFutureListener() {
                 @Override
@@ -172,9 +192,11 @@ public class WebSocketTransport extends ChannelInboundHandlerAdapter {
                         log.error("Can't handshake " + sessionId, future.cause());
                         return;
                     }
-
+                    //这里
                     channel.pipeline().addBefore(SocketIOChannelInitializer.WEB_SOCKET_TRANSPORT, SocketIOChannelInitializer.WEB_SOCKET_AGGREGATOR,
                             new WebSocketFrameAggregator(configuration.getMaxFramePayloadLength()));
+
+
                     connectClient(channel, sessionId);
                 }
             });
@@ -183,6 +205,11 @@ public class WebSocketTransport extends ChannelInboundHandlerAdapter {
         }
     }
 
+
+
+    /**
+     * 第一次建立连接
+     * */
     private void connectClient(final Channel channel, final UUID sessionId) {
         ClientHead client = clientsBox.get(sessionId);
         if (client == null) {
@@ -192,8 +219,11 @@ public class WebSocketTransport extends ChannelInboundHandlerAdapter {
             return;
         }
 
+        //channel 与 ClientHead建立关系，请求近来直接通过该channel查询ClientHead
+        //只有建立了channel和CliendHead之间的关系，才能发送消息
         client.bindChannel(channel, Transport.WEBSOCKET);
 
+        //第一连接 ，还没有namespace, namespace 是第二时间发过来的
         authorizeHandler.connect(client);
 
         if (client.getCurrentTransport() == Transport.POLLING) {

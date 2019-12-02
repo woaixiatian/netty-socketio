@@ -34,10 +34,13 @@ package com.corundumstudio.socketio.transport;
 
 import com.corundumstudio.socketio.Configuration;
 import com.corundumstudio.socketio.SocketIOServer;
+import com.corundumstudio.socketio.store.RedissonStoreFactory;
 import org.junit.Test;
 
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.embedded.EmbeddedChannel;
+import org.redisson.Redisson;
+import org.redisson.api.RedissonClient;
 
 
 /**
@@ -54,7 +57,9 @@ public class WebSocketTransportTest {
 
     Configuration configuration = new Configuration();
     configuration.setHostname("127.0.0.1");
-    configuration.setPort(8088);
+    configuration.setPort(8089);
+
+    configuration.setStoreFactory(new RedissonStoreFactory());
     SocketIOServer server = new SocketIOServer(configuration);
     server.start();
     try {

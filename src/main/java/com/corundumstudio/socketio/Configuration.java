@@ -28,32 +28,44 @@ import com.corundumstudio.socketio.store.StoreFactory;
 
 import javax.net.ssl.KeyManagerFactory;
 
+/**
+ *
+ * SocketIOServer的默认配置
+ * */
 public class Configuration {
 
     private ExceptionListener exceptionListener = new DefaultExceptionListener();
 
+    //默认http请求路径 与socket.io.js 的一致
     private String context = "/socket.io";
-
+    //通信方式  websocket长连接/轮询   默认为websocket
     private List<Transport> transports = Arrays.asList(Transport.WEBSOCKET, Transport.POLLING);
-
+    // 创建 boss 线程组 用于服务端接受客户端的连接-------- 默认为进程数的2倍
+    // 创建 worker 线程组 用于进行 SocketChannel 的数据读写----------通常为进程数的2倍
     private int bossThreads = 0; // 0 = current_processors_amount * 2
     private int workerThreads = 0; // 0 = current_processors_amount * 2
+    //使用linux本地epoll多路复用模型
     private boolean useLinuxNativeEpoll;
 
     private boolean allowCustomRequests = false;
-
+    //协议切换的超时时间
     private int upgradeTimeout = 10000;
+    //ping超时时间
     private int pingTimeout = 60000;
+    //ping间隔时间
     private int pingInterval = 25000;
+    //
     private int firstDataTimeout = 5000;
-
+    //最大的content长度
     private int maxHttpContentLength = 64 * 1024;
     private int maxFramePayloadLength = 64 * 1024;
-
+    //
     private String packagePrefix;
+    //域名
     private String hostname;
+    //接口
     private int port = -1;
-
+    //https 一些`
     private String sslProtocol = "TLSv1";
 
     private String keyStoreFormat = "JKS";

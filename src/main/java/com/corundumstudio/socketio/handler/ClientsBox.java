@@ -23,6 +23,7 @@ import java.util.UUID;
 
 import com.corundumstudio.socketio.HandshakeData;
 
+
 public class ClientsBox {
 
     private final Map<UUID, ClientHead> uuid2clients = PlatformDependent.newConcurrentHashMap();
@@ -37,7 +38,8 @@ public class ClientsBox {
 
         return client.getHandshakeData();
     }
-
+    //sessionId 是这个会话信息标识
+    //通过这个来维护会话在服务器端存储
     public void addClient(ClientHead clientHead) {
         uuid2clients.put(clientHead.getSessionId(), clientHead);
     }
@@ -49,7 +51,8 @@ public class ClientsBox {
     public ClientHead get(UUID sessionId) {
         return uuid2clients.get(sessionId);
     }
-
+    //Channel是客户端IP和服务IP的关联关系，是这个socket会话的连接标识
+    //通过这个维护实际的channel的开关，属于通信通道维护的层面
     public void add(Channel channel, ClientHead clientHead) {
         channel2clients.put(channel, clientHead);
     }

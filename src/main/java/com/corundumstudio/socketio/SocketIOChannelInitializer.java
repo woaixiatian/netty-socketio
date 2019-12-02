@@ -108,6 +108,7 @@ public class SocketIOChannelInitializer extends ChannelInitializer<Channel> impl
         PacketEncoder encoder = new PacketEncoder(configuration, jsonSupport);
         PacketDecoder decoder = new PacketDecoder(jsonSupport, ackManager);
 
+        //
         String connectPath = configuration.getContext() + "/";
 
         boolean isSsl = configuration.getKeyStore() != null;
@@ -118,7 +119,7 @@ public class SocketIOChannelInitializer extends ChannelInitializer<Channel> impl
                 throw new IllegalStateException(e);
             }
         }
-
+        //
         StoreFactory factory = configuration.getStoreFactory();
         authorizeHandler = new AuthorizeHandler(connectPath, scheduler, configuration, namespacesHub, factory, this, ackManager, clientsBox);
         factory.init(namespacesHub, authorizeHandler, jsonSupport);

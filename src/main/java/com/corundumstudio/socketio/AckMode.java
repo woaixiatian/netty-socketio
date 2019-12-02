@@ -15,25 +15,28 @@
  */
 package com.corundumstudio.socketio;
 
+/**
+ * 接收到消息之后的确认模式
+ * */
 public enum AckMode {
 
     /**
      * Send ack-response automatically on each ack-request
      * <b>skip</b> exceptions during packet handling
      */
-    AUTO,
+    AUTO,//自动确认，跳过异常
 
     /**
      * Send ack-response automatically on each ack-request
      * only after <b>success</b> packet handling
      */
-    AUTO_SUCCESS_ONLY,
+    AUTO_SUCCESS_ONLY,//成功时，确认
 
     /**
      * Turn off auto ack-response sending.
      * Use AckRequest.sendAckData to send ack-response each time.
      *
      */
-    MANUAL
+    MANUAL//人工确认
 
 }

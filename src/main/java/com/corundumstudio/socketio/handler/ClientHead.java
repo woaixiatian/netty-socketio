@@ -45,6 +45,11 @@ import java.util.Map.Entry;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+/**
+ * 客户端请求的数据封装
+ * 以及发送给客户端的数据封装
+ * 一个客户端连接，一个对象
+ * */
 public class ClientHead {
 
     private static final Logger log = LoggerFactory.getLogger(ClientHead.class);
@@ -52,7 +57,9 @@ public class ClientHead {
     public static final AttributeKey<ClientHead> CLIENT = AttributeKey.<ClientHead>valueOf("client");
 
     private final AtomicBoolean disconnected = new AtomicBoolean();
+    //同一个客户端可以通过一个channel  进入多个namespace会话组
     private final Map<Namespace, NamespaceClient> namespaceClients = PlatformDependent.newConcurrentHashMap();
+    //封装不同通讯类型的 通讯类型 ，以及通信消息的map关系
     private final Map<Transport, TransportState> channels = new HashMap<Transport, TransportState>(2);
     private final HandshakeData handshakeData;
     private final UUID sessionId;
@@ -86,10 +93,16 @@ public class ClientHead {
         channels.put(Transport.WEBSOCKET, new TransportState());
     }
 
+
+    /**
+     * 对客户端的
+     * */
     public void bindChannel(Channel channel, Transport transport) {
         log.debug("binding channel: {} to transport: {}", channel, transport);
 
         TransportState state = channels.get(transport);
+        //绑定TransportState 和channel 关系
+        //Transport
         Channel prevChannel = state.update(channel);
         if (prevChannel != null) {
             clientsBox.remove(prevChannel);
@@ -112,6 +125,8 @@ public class ClientHead {
     }
 
     public ChannelFuture send(Packet packet) {
+
+        System.out.println(packet);
         return send(packet, getCurrentTransport());
     }
 
@@ -120,6 +135,9 @@ public class ClientHead {
         disconnectScheduler.cancel(key);
     }
 
+    /**
+     *
+     * */
     public void schedulePingTimeout() {
         SchedulerKey key = new SchedulerKey(Type.PING_TIMEOUT, sessionId);
         disconnectScheduler.schedule(key, new Runnable() {
@@ -134,9 +152,18 @@ public class ClientHead {
         }, configuration.getPingTimeout() + configuration.getPingInterval(), TimeUnit.MILLISECONDS);
     }
 
+    /**
+     * 发送消息
+     * packet为消息体
+     * transport为 通信类型 WEBSOCKET/POLLING
+     * this 携带transport类型对应的TransportState
+     * TransportState 携带了通信的client端和server端信息 ip+port  以及需要床底的
+     * */
     public ChannelFuture send(Packet packet, Transport transport) {
         TransportState state = channels.get(transport);
         state.getPacketsQueue().add(packet);
+
+        System.out.println("----transportState----"+state.getPacketsQueue().size());
 
         Channel channel = state.getChannel();
         if (channel == null
@@ -146,6 +173,10 @@ public class ClientHead {
         return sendPackets(transport, channel);
     }
 
+    /**
+     * 调用自身方法使用指定通信方式Transport
+     * 向指定channel 传递数据
+     * */
     private ChannelFuture sendPackets(Transport transport, Channel channel) {
         return channel.writeAndFlush(new OutPacketMessage(this, transport));
     }

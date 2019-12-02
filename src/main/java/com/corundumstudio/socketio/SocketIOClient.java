@@ -26,6 +26,7 @@ import com.corundumstudio.socketio.store.Store;
 /**
  * Fully thread-safe.
  *
+ * 代表一个通信客户端
  */
 public interface SocketIOClient extends ClientOperations, Store {
 
@@ -62,6 +63,7 @@ public interface SocketIOClient extends ClientOperations, Store {
 
     /**
      * Client namespace
+     * 客户端所属的聊天室
      *
      * @return - namespace
      */
@@ -69,14 +71,14 @@ public interface SocketIOClient extends ClientOperations, Store {
 
     /**
      * Client session id, uses {@link UUID} object
-     *
+     * 客户端会话标识，唯一
      * @return - session id
      */
     UUID getSessionId();
 
     /**
      * Get client remote address
-     *
+     *  客户端远程地址
      * @return remote address
      */
     SocketAddress getRemoteAddress();

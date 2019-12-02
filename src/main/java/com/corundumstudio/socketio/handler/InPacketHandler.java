@@ -21,6 +21,7 @@ import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
 import io.netty.util.CharsetUtil;
 
+import io.netty.util.ReferenceCountUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -56,6 +57,7 @@ public class InPacketHandler extends SimpleChannelInboundHandler<PacketsMessage>
     @Override
     protected void channelRead0(io.netty.channel.ChannelHandlerContext ctx, PacketsMessage message)
                 throws Exception {
+        System.out.println("InPacketHandler---channelRead0");
         System.out.println("---InPacketHandler--remoteAddress--"+ctx.channel().remoteAddress());
         ByteBuf content = message.getContent();
         ClientHead client = message.getClient();
@@ -66,12 +68,17 @@ public class InPacketHandler extends SimpleChannelInboundHandler<PacketsMessage>
         log.error("--------------------count-----------------"+count);
         while (content.isReadable()) {
             try {
+                //解析请求包 解析出当亲请求的类型，所属namespace标识 消息体等等
+                // 这块比较暂时未分析
                 Packet packet = decoder.decodePackets(content, client);
                 if (packet.hasAttachments() && !packet.isAttachmentsLoaded()) {
                     return;
                 }
+                //根据namespace标识，获取详情
+                //namespace一般是通过直接调取SocketIOServer
                 Namespace ns = namespacesHub.get(packet.getNsp());
                 if (ns == null) {
+                    //如果不存在，并且是连接请求，那么直接返回错误信息
                     if (packet.getSubType() == PacketType.CONNECT) {
                         Packet p = new Packet(PacketType.MESSAGE);
                         p.setSubType(PacketType.ERROR);
@@ -83,16 +90,18 @@ public class InPacketHandler extends SimpleChannelInboundHandler<PacketsMessage>
                     log.debug("Can't find namespace for endpoint: {}, sessionId: {} probably it was removed.", packet.getNsp(), client.getSessionId());
                     return;
                 }
-
+                //建立链接的请求，那么把该namespace与NamespaceClient做映射关系
+                //NamespaceClient 包含了ClientHead和namespace信息
                 if (packet.getSubType() == PacketType.CONNECT) {
                     client.addNamespaceClient(ns);
                 }
-
+                //获取该 namespace 映射的NamespaceClient
                 NamespaceClient nClient = client.getChildClient(ns);
                 if (nClient == null) {
                     log.debug("Can't find namespace client in namespace: {}, sessionId: {} probably it was disconnected.", ns.getName(), client.getSessionId());
                     return;
                 }
+                //处理相关的请求
                 packetListener.onPacket(packet, nClient, message.getTransport());
             } catch (Exception ex) {
                 String c = content.toString(CharsetUtil.UTF_8);
@@ -101,6 +110,27 @@ public class InPacketHandler extends SimpleChannelInboundHandler<PacketsMessage>
             }
         }
     }
+    //
+    @Override
+    public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
+        System.out.println("InPacketHandler---channelRead");
+        boolean release = true;
+        try {
+            if (acceptInboundMessage(msg)) {
+                @SuppressWarnings("unchecked")
+                PacketsMessage imsg = (PacketsMessage) msg;
+                channelRead0(ctx, imsg);
+            } else {
+                release = false;
+                ctx.fireChannelRead(msg);
+            }
+        } finally {
+            if (release) {
+                ReferenceCountUtil.release(msg);
+            }
+        }
+    }
+
 
     @Override
     public void exceptionCaught(ChannelHandlerContext ctx, Throwable e) throws Exception {

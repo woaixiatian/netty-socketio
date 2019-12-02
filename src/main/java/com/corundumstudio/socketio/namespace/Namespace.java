@@ -49,21 +49,32 @@ import io.netty.util.internal.PlatformDependent;
  * Namespace shares by different namespace-clients.
  *
  * @see com.corundumstudio.socketio.transport.NamespaceClient
+ *
+ * namespace 可以认为是一个聊天室/群/组
+ * name是它的标识
+ *
+ *
+ *
  */
 public class Namespace implements SocketIONamespace {
 
+    //默认的名称
     public static final String DEFAULT_NAME = "";
-
+    //扫描监听器的引擎，主要用于注解形式的监听器
     private final ScannerEngine engine = new ScannerEngine();
+    //各种事件的监听器
     private final ConcurrentMap<String, EventEntry<?>> eventListeners = PlatformDependent.newConcurrentHashMap();
     private final Queue<ConnectListener> connectListeners = new ConcurrentLinkedQueue<ConnectListener>();
     private final Queue<DisconnectListener> disconnectListeners = new ConcurrentLinkedQueue<DisconnectListener>();
     private final Queue<PingListener> pingListeners = new ConcurrentLinkedQueue<PingListener>();
 
+    //当前聊天室的所有成员(客户端)SocketIOClient，每个成员用UUID作为唯一标识,
     private final Map<UUID, SocketIOClient> allClients = PlatformDependent.newConcurrentHashMap();
+    //聊天室标识与所有成员唯一标识的的映射关系
     private final ConcurrentMap<String, Set<UUID>> roomClients = PlatformDependent.newConcurrentHashMap();
+    //成员标识与对应聊天室的name的集合的映射挂很细
     private final ConcurrentMap<UUID, Set<String>> clientRooms = PlatformDependent.newConcurrentHashMap();
-
+    //聊天室name 也是唯一标识
     private final String name;
     private final AckMode ackMode;
     private final JsonSupport jsonSupport;
@@ -262,6 +273,7 @@ public class Namespace implements SocketIONamespace {
         return true;
     }
 
+    //
     @Override
     public void addListeners(Object listeners) {
         addListeners(listeners, listeners.getClass());

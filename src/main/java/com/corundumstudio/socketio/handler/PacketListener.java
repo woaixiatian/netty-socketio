@@ -52,7 +52,9 @@ public class PacketListener {
         }
 
         switch (packet.getType()) {
+        //处理心跳
         case PING: {
+            //直接心跳返回
             Packet outPacket = new Packet(PacketType.PONG);
             outPacket.setData(packet.getData());
             // TODO use future
@@ -61,8 +63,13 @@ public class PacketListener {
             if ("probe".equals(packet.getData())) {
                 client.getBaseClient().send(new Packet(PacketType.NOOP), Transport.POLLING);
             } else {
+                //重置Ping超时的定时任务，每次ping的时候都重试，这样就能保证
+                //只要client一直发送心跳监测，那么该定时任务就会一会重置，不会执行
+                //反之，一旦client端不再发送心跳监测，定时任务就会执行，
+                //该定时任务就是用来移除该客户端连接状态，执行时间为配置的Ping间隔+PING超时时间
                 client.getBaseClient().schedulePingTimeout();
             }
+            //处理ping事件的监听
             Namespace namespace = namespacesHub.get(packet.getNsp());
             namespace.onPing(client);
             break;

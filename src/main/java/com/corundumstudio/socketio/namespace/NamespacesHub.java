@@ -36,6 +36,10 @@ public class NamespacesHub {
         this.configuration = configuration;
     }
 
+    //创建Namespace聊天室，目前只有初始化SocketIOServer的时候才会创建一个默认的
+    //如果要创建其他的，那么需要在单独调用该方法来创建
+    //一旦与SocketIOServer通信过程中，是无法创建的，因此通常在建立Socket链接之前调用创建
+    //否则会报错
     public Namespace create(String name) {
         Namespace namespace = (Namespace) namespaces.get(name);
         if (namespace == null) {

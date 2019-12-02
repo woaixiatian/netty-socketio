@@ -22,6 +22,11 @@ import com.corundumstudio.socketio.protocol.Packet;
 
 import io.netty.channel.Channel;
 
+/**
+ * 准备send 消息的封装对象
+ * 包括对象的Packet
+ * 和通信的channel
+ * */
 public class TransportState {
 
     private Queue<Packet> packetsQueue = new ConcurrentLinkedQueue<Packet>();
